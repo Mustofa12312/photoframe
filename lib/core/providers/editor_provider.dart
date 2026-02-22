@@ -24,7 +24,7 @@ class EditorProvider extends ChangeNotifier {
 
     // Auto-detect brand from exif
     if (exif != null) {
-      _activeBrand = DeviceBrandExt.fromMake(exif.cameraMake);
+      _activeBrand = DeviceBrandExtension.fromMake(exif.cameraMake);
     } else {
       _activeBrand = DeviceBrand.unknown;
     }

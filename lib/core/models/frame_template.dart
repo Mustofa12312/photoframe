@@ -1,41 +1,145 @@
 import 'package:flutter/material.dart';
 
-enum DeviceBrand { sony, fujifilm, apple, leica, canon, nikon, unknown }
+enum DeviceBrand {
+  // Mobile / Phone Brands
+  apple,
+  samsung,
+  google,
+  xiaomi,
+  oppo,
+  vivo,
+  oneplus,
+  realme,
+  asus,
+  sonyPhone,
+  motorola,
+  huawei,
 
-extension DeviceBrandExt on DeviceBrand {
+  // Camera & Lens Brands
+  sony,
+  canon,
+  nikon,
+  fujifilm,
+  leica,
+  panasonic,
+  lumix,
+  olympus,
+  hasselblad,
+  pentax,
+  ricoh,
+  sigma,
+  tamron,
+
+  unknown,
+}
+
+extension DeviceBrandExtension on DeviceBrand {
   String get displayName {
     switch (this) {
+      // Mobile
+      case DeviceBrand.apple:
+        return 'SHOT ON IPHONE';
+      case DeviceBrand.samsung:
+        return 'SAMSUNG GALAXY';
+      case DeviceBrand.google:
+        return 'GOOGLE PIXEL';
+      case DeviceBrand.xiaomi:
+        return 'XIAOMI';
+      case DeviceBrand.oppo:
+        return 'OPPO';
+      case DeviceBrand.vivo:
+        return 'VIVO';
+      case DeviceBrand.oneplus:
+        return 'ONEPLUS';
+      case DeviceBrand.realme:
+        return 'REALME';
+      case DeviceBrand.asus:
+        return 'ASUS ROG / ZENFONE';
+      case DeviceBrand.sonyPhone:
+        return 'SONY XPERIA';
+      case DeviceBrand.motorola:
+        return 'MOTOROLA';
+      case DeviceBrand.huawei:
+        return 'HUAWEI XIMAGE';
+
+      // Cameras
       case DeviceBrand.sony:
-        return 'SONY';
+        return 'SONY ALPHA';
+      case DeviceBrand.canon:
+        return 'CANON EOS';
+      case DeviceBrand.nikon:
+        return 'NIKON';
       case DeviceBrand.fujifilm:
         return 'FUJIFILM';
-      case DeviceBrand.apple:
-        return 'Apple';
       case DeviceBrand.leica:
-        return 'Leica';
-      case DeviceBrand.canon:
-        return 'Canon';
-      case DeviceBrand.nikon:
-        return 'Nikon';
+        return 'LEICA';
+      case DeviceBrand.panasonic:
+        return 'PANASONIC';
+      case DeviceBrand.lumix:
+        return 'LUMIX';
+      case DeviceBrand.olympus:
+        return 'OLYMPUS';
+      case DeviceBrand.hasselblad:
+        return 'HASSELBLAD';
+      case DeviceBrand.pentax:
+        return 'PENTAX';
+      case DeviceBrand.ricoh:
+        return 'RICOH GR';
+      case DeviceBrand.sigma:
+        return 'SIGMA';
+      case DeviceBrand.tamron:
+        return 'TAMRON LENS';
+
       case DeviceBrand.unknown:
-        return 'Unknown Device';
+        return 'UNKNOWN DEVICE';
     }
   }
 
   // Helper to parse from EXIF make
   static DeviceBrand fromMake(String make) {
     final lower = make.toLowerCase();
+
+    // Phones
+    if (lower.contains('apple') || lower.contains('iphone'))
+      return DeviceBrand.apple;
+    if (lower.contains('samsung')) return DeviceBrand.samsung;
+    if (lower.contains('google') || lower.contains('pixel'))
+      return DeviceBrand.google;
+    if (lower.contains('xiaomi') ||
+        lower.contains('redmi') ||
+        lower.contains('poco'))
+      return DeviceBrand.xiaomi;
+    if (lower.contains('oppo')) return DeviceBrand.oppo;
+    if (lower.contains('vivo')) return DeviceBrand.vivo;
+    if (lower.contains('oneplus')) return DeviceBrand.oneplus;
+    if (lower.contains('realme')) return DeviceBrand.realme;
+    if (lower.contains('asus')) return DeviceBrand.asus;
+    if (lower.contains('motorola') || lower.contains('moto'))
+      return DeviceBrand.motorola;
+    if (lower.contains('huawei')) return DeviceBrand.huawei;
+
+    // Cameras
     if (lower.contains('sony')) return DeviceBrand.sony;
-    if (lower.contains('fuji')) return DeviceBrand.fujifilm;
-    if (lower.contains('apple')) return DeviceBrand.apple;
-    if (lower.contains('leica')) return DeviceBrand.leica;
     if (lower.contains('canon')) return DeviceBrand.canon;
     if (lower.contains('nikon')) return DeviceBrand.nikon;
+    if (lower.contains('fuji')) return DeviceBrand.fujifilm;
+    if (lower.contains('leica')) return DeviceBrand.leica;
+    if (lower.contains('panasonic') || lower.contains('lumix'))
+      return DeviceBrand.panasonic;
+    if (lower.contains('olympus')) return DeviceBrand.olympus;
+    if (lower.contains('hasselblad')) return DeviceBrand.hasselblad;
+    if (lower.contains('pentax')) return DeviceBrand.pentax;
+    if (lower.contains('ricoh')) return DeviceBrand.ricoh;
+    if (lower.contains('sigma')) return DeviceBrand.sigma;
+    if (lower.contains('tamron')) return DeviceBrand.tamron;
+
     return DeviceBrand.unknown;
   }
 }
 
 enum FrameLayout { deviceClassic, polaroid, minimalist }
+
+enum PhotoFilter { none, sepia, blackAndWhite, vintage, cool, warm }
 
 class FrameStyle {
   final FrameLayout layout;
@@ -44,6 +148,7 @@ class FrameStyle {
   final double bottomBarHeightRatio; // space for exif info
   final bool hasShadow;
   final DeviceBrand brandOverride;
+  final PhotoFilter filter;
 
   const FrameStyle({
     this.layout = FrameLayout.deviceClassic,
@@ -52,6 +157,7 @@ class FrameStyle {
     this.bottomBarHeightRatio = 0.15,
     this.hasShadow = true,
     this.brandOverride = DeviceBrand.unknown,
+    this.filter = PhotoFilter.none,
   });
 
   FrameStyle copyWith({
@@ -61,6 +167,7 @@ class FrameStyle {
     double? bottomBarHeightRatio,
     bool? hasShadow,
     DeviceBrand? brandOverride,
+    PhotoFilter? filter,
   }) {
     return FrameStyle(
       layout: layout ?? this.layout,
@@ -69,6 +176,7 @@ class FrameStyle {
       bottomBarHeightRatio: bottomBarHeightRatio ?? this.bottomBarHeightRatio,
       hasShadow: hasShadow ?? this.hasShadow,
       brandOverride: brandOverride ?? this.brandOverride,
+      filter: filter ?? this.filter,
     );
   }
 }

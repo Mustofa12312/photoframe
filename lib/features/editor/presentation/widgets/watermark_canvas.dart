@@ -186,6 +186,16 @@ class WatermarkCanvas extends StatelessWidget {
   }
 
   Widget _buildImageWithShadow(FrameStyle style, String imagePath) {
+    Widget imageWidget = Image.file(File(imagePath), fit: BoxFit.contain);
+
+    // Apply Photo Filters
+    if (style.filter != PhotoFilter.none) {
+      imageWidget = ColorFiltered(
+        colorFilter: _getColorFilterMatrix(style.filter),
+        child: imageWidget,
+      );
+    }
+
     return Container(
       decoration: style.hasShadow
           ? BoxDecoration(
@@ -198,8 +208,130 @@ class WatermarkCanvas extends StatelessWidget {
               ],
             )
           : null,
-      child: Image.file(File(imagePath), fit: BoxFit.contain),
+      child: imageWidget,
     );
+  }
+
+  ColorFilter _getColorFilterMatrix(PhotoFilter filter) {
+    switch (filter) {
+      case PhotoFilter.blackAndWhite:
+        return const ColorFilter.matrix([
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+        ]);
+      case PhotoFilter.sepia:
+        return const ColorFilter.matrix([
+          0.393,
+          0.769,
+          0.189,
+          0,
+          0,
+          0.349,
+          0.686,
+          0.168,
+          0,
+          0,
+          0.272,
+          0.534,
+          0.131,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+        ]);
+      case PhotoFilter.vintage:
+        return const ColorFilter.matrix([
+          1.2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1.1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.9,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+        ]);
+      case PhotoFilter.warm:
+        return const ColorFilter.matrix([
+          1.1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.85,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+        ]);
+      case PhotoFilter.cool:
+        return const ColorFilter.matrix([
+          0.85,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.95,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1.1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+        ]);
+      case PhotoFilter.none:
+        return const ColorFilter.mode(Colors.transparent, BlendMode.multiply);
+    }
   }
 
   Widget _buildExifTextRight(ExifData exif, FrameStyle style) {

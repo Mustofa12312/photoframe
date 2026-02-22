@@ -98,10 +98,10 @@ class _EditorScreenState extends State<EditorScreen> {
                   () => _showColorPicker(context),
                 ),
                 _buildToolIcon(
-                  Icons.font_download,
-                  'font',
-                  null,
-                ), // Placeholder
+                  Icons.filter_b_and_w,
+                  'filter',
+                  () => _showFilterPicker(context),
+                ),
                 _buildToolIcon(
                   Icons.dashboard,
                   'style',
@@ -243,6 +243,60 @@ class _EditorScreenState extends State<EditorScreen> {
                       ),
                       onTap: () {
                         context.read<EditorProvider>().updateStyle(preset);
+                        Navigator.pop(ctx);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showFilterPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return Container(
+          color: AppTheme.surfaceColor,
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Photo Filters',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: PhotoFilter.values.length,
+                  itemBuilder: (context, index) {
+                    final filter = PhotoFilter.values[index];
+                    return ListTile(
+                      leading: const Icon(
+                        Icons.blur_linear,
+                        color: AppTheme.primaryColor,
+                      ),
+                      title: Text(
+                        filter.name.toUpperCase(),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      onTap: () {
+                        final currentStyle = context
+                            .read<EditorProvider>()
+                            .currentStyle;
+                        context.read<EditorProvider>().updateStyle(
+                          currentStyle.copyWith(filter: filter),
+                        );
                         Navigator.pop(ctx);
                       },
                     );
