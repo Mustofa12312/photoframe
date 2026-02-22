@@ -4,6 +4,7 @@ import 'package:palette_generator/palette_generator.dart';
 import 'dart:io';
 import '../utils/exif_util.dart';
 import '../models/frame_template.dart';
+import '../models/canvas_layer.dart';
 
 class EditorProvider extends ChangeNotifier {
   XFile? _selectedImage;
@@ -11,10 +12,16 @@ class EditorProvider extends ChangeNotifier {
   FrameStyle _currentStyle = const FrameStyle();
   DeviceBrand _activeBrand = DeviceBrand.unknown;
 
+  // Custom Canva Mode Layers
+  List<CanvasLayer> _layers = [];
+  String? _selectedLayerId;
+
   XFile? get selectedImage => _selectedImage;
   ExifData? get exifData => _exifData;
   FrameStyle get currentStyle => _currentStyle;
   DeviceBrand get activeBrand => _activeBrand;
+  List<CanvasLayer> get layers => _layers;
+  String? get selectedLayerId => _selectedLayerId;
 
   bool get hasImage => _selectedImage != null;
 
@@ -70,6 +77,34 @@ class EditorProvider extends ChangeNotifier {
     _exifData = null;
     _currentStyle = const FrameStyle();
     _activeBrand = DeviceBrand.unknown;
+    _layers.clear();
+    _selectedLayerId = null;
+    notifyListeners();
+  }
+
+  // --- Layer Management (Canva Mode) ---
+  void addLayer(CanvasLayer layer) {
+    _layers.add(layer);
+    _selectedLayerId = layer.id;
+    notifyListeners();
+  }
+
+  void removeLayer(String id) {
+    _layers.removeWhere((l) => l.id == id);
+    if (_selectedLayerId == id) _selectedLayerId = null;
+    notifyListeners();
+  }
+
+  void updateLayer(String id, CanvasLayer newLayer) {
+    final index = _layers.indexWhere((l) => l.id == id);
+    if (index != -1) {
+      _layers[index] = newLayer;
+      notifyListeners();
+    }
+  }
+
+  void selectLayer(String? id) {
+    _selectedLayerId = id;
     notifyListeners();
   }
 }

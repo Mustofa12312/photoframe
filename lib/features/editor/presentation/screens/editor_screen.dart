@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:screenshot/screenshot.dart';
 import '../../../../core/providers/editor_provider.dart';
 import '../../../../core/models/frame_template.dart';
+import '../../../../core/models/canvas_layer.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../widgets/watermark_canvas.dart';
 import '../../../../core/utils/export_util.dart';
@@ -140,42 +141,61 @@ class _EditorScreenState extends State<EditorScreen> {
                       scrollDirection: Axis.horizontal,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildToolIcon(
-                              Icons.layers_outlined,
-                              'Brand',
-                              () => _showDevicePicker(context),
-                            ),
-                            _buildToolIcon(
-                              Icons.format_color_fill,
-                              'Color',
-                              () => _showColorPicker(context),
-                            ),
-                            _buildToolIcon(
-                              Icons.camera_enhance_outlined,
-                              'Filter',
-                              () => _showFilterPicker(context),
-                            ),
-                            _buildToolIcon(
-                              Icons.dashboard_customize_outlined,
-                              'Style',
-                              () => _showTemplatePicker(context),
-                            ),
-                            const SizedBox(width: 8),
-                            _buildToolIcon(
-                              Icons.tune,
-                              'Data',
-                              () => _showDataEditor(context),
-                            ),
-                            const SizedBox(width: 8),
-                            _buildToolIcon(
-                              Icons.crop_free,
-                              'Size',
-                              () => _showSizeSlider(context),
-                            ),
-                          ],
+                        child: Consumer<EditorProvider>(
+                          builder: (context, provider, child) {
+                            final isCustom =
+                                provider.currentStyle.layout ==
+                                FrameLayout.custom;
+
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                if (!isCustom)
+                                  _buildToolIcon(
+                                    Icons.layers_outlined,
+                                    'Brand',
+                                    () => _showDevicePicker(context),
+                                  ),
+                                if (isCustom)
+                                  _buildToolIcon(
+                                    Icons.add_box_outlined,
+                                    'Add Item',
+                                    () =>
+                                        _showAddLayerOptions(context, provider),
+                                  ),
+                                _buildToolIcon(
+                                  Icons.format_color_fill,
+                                  'Color',
+                                  () => _showColorPicker(context),
+                                ),
+                                if (!isCustom)
+                                  _buildToolIcon(
+                                    Icons.camera_enhance_outlined,
+                                    'Filter',
+                                    () => _showFilterPicker(context),
+                                  ),
+                                _buildToolIcon(
+                                  Icons.dashboard_customize_outlined,
+                                  isCustom ? 'Template' : 'Style',
+                                  () => _showTemplatePicker(context),
+                                ),
+                                const SizedBox(width: 8),
+                                if (!isCustom)
+                                  _buildToolIcon(
+                                    Icons.tune,
+                                    'Data',
+                                    () => _showDataEditor(context),
+                                  ),
+                                if (!isCustom) const SizedBox(width: 8),
+                                if (!isCustom)
+                                  _buildToolIcon(
+                                    Icons.crop_free,
+                                    'Size',
+                                    () => _showSizeSlider(context),
+                                  ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -345,51 +365,106 @@ class _EditorScreenState extends State<EditorScreen> {
     showModalBottomSheet(
       context: context,
       builder: (ctx) {
-        return Container(
-          color: AppTheme.surfaceColor,
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Photo Filters',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: PhotoFilter.values.length,
-                  itemBuilder: (context, index) {
-                    final filter = PhotoFilter.values[index];
-                    return ListTile(
-                      leading: const Icon(
-                        Icons.blur_linear,
-                        color: AppTheme.primaryColor,
+        return Consumer<EditorProvider>(
+          builder: (context, provider, child) {
+            final intensity = provider.currentStyle.filterIntensity;
+            return Container(
+              color: AppTheme.surfaceColor,
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Photo Presets',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Filter Intensity Adjuster Slider
+                  if (provider.currentStyle.filter != PhotoFilter.none) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.opacity,
+                            color: Colors.white54,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Slider(
+                              value: intensity,
+                              min: 0.0,
+                              max: 1.0,
+                              activeColor: AppTheme.primaryColor,
+                              inactiveColor: Colors.white24,
+                              onChanged: (val) {
+                                provider.updateStyle(
+                                  provider.currentStyle.copyWith(
+                                    filterIntensity: val,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          Text(
+                            '${(intensity * 100).round()}%',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                      title: Text(
-                        filter.name.toUpperCase(),
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                      onTap: () {
-                        final currentStyle = context
-                            .read<EditorProvider>()
-                            .currentStyle;
-                        context.read<EditorProvider>().updateStyle(
-                          currentStyle.copyWith(filter: filter),
+                    ),
+                    const Divider(color: Colors.white12, height: 24),
+                  ],
+
+                  Expanded(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: PhotoFilter.values.length,
+                      itemBuilder: (context, index) {
+                        final filter = PhotoFilter.values[index];
+                        final isSelected =
+                            provider.currentStyle.filter == filter;
+
+                        return ListTile(
+                          leading: Icon(
+                            Icons.blur_linear,
+                            color: isSelected
+                                ? AppTheme.primaryColor
+                                : Colors.white54,
+                          ),
+                          title: Text(
+                            filter.name.toUpperCase(),
+                            style: TextStyle(
+                              color: isSelected
+                                  ? AppTheme.primaryColor
+                                  : Colors.white,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                          onTap: () {
+                            provider.updateStyle(
+                              provider.currentStyle.copyWith(filter: filter),
+                            );
+                          },
                         );
-                        Navigator.pop(ctx);
                       },
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -452,6 +527,72 @@ class _EditorScreenState extends State<EditorScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return _DataEditorSheet();
+      },
+    );
+  }
+
+  void _showAddLayerOptions(BuildContext context, EditorProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return Container(
+          color: AppTheme.surfaceColor,
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Add Element',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.text_fields, color: Colors.white),
+                title: const Text(
+                  'Add Custom Text',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  final newLayer = CanvasLayer(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    type: LayerType.text,
+                    text: 'Your text here',
+                    position: const Offset(100, 100),
+                  );
+                  provider.addLayer(newLayer);
+                  Navigator.pop(ctx);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.info_outline, color: Colors.white),
+                title: const Text(
+                  'Add Photo EXIF Text',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  final exif = provider.exifData;
+                  final String exifStr = exif != null
+                      ? '${exif.focalLength} | f/${exif.fNumber} | ISO ${exif.isoSpeedRatings}'
+                      : '24mm | f/1.8 | ISO 100';
+
+                  final newLayer = CanvasLayer(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    type: LayerType.exifInfo,
+                    text: exifStr,
+                    fontFamily: 'Inter',
+                    position: const Offset(100, 150),
+                  );
+                  provider.addLayer(newLayer);
+                  Navigator.pop(ctx);
+                },
+              ),
+            ],
+          ),
+        );
       },
     );
   }

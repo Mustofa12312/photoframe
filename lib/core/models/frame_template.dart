@@ -217,7 +217,7 @@ extension DeviceBrandExtension on DeviceBrand {
   }
 }
 
-enum FrameLayout { deviceClassic, polaroid, minimalist }
+enum FrameLayout { deviceClassic, polaroid, minimalist, custom }
 
 enum PhotoFilter { none, sepia, blackAndWhite, vintage, cool, warm }
 
@@ -229,6 +229,7 @@ class FrameStyle {
   final bool hasShadow;
   final DeviceBrand brandOverride;
   final PhotoFilter filter;
+  final double filterIntensity;
 
   // Advanced toggles
   final bool showDate;
@@ -244,6 +245,7 @@ class FrameStyle {
     this.hasShadow = true,
     this.brandOverride = DeviceBrand.unknown,
     this.filter = PhotoFilter.none,
+    this.filterIntensity = 1.0,
     this.showDate = true,
     this.showExposure = true,
     this.showLens = true,
@@ -258,6 +260,7 @@ class FrameStyle {
     bool? hasShadow,
     DeviceBrand? brandOverride,
     PhotoFilter? filter,
+    double? filterIntensity,
     bool? showDate,
     bool? showExposure,
     bool? showLens,
@@ -271,6 +274,7 @@ class FrameStyle {
       hasShadow: hasShadow ?? this.hasShadow,
       brandOverride: brandOverride ?? this.brandOverride,
       filter: filter ?? this.filter,
+      filterIntensity: filterIntensity ?? this.filterIntensity,
       showDate: showDate ?? this.showDate,
       showExposure: showExposure ?? this.showExposure,
       showLens: showLens ?? this.showLens,
@@ -298,6 +302,12 @@ class TemplatePresets {
       backgroundColor: Colors.black,
       paddingRatio: 0.1,
       hasShadow: false,
+    ),
+    FrameStyle(
+      layout: FrameLayout.custom,
+      backgroundColor: Colors.white,
+      paddingRatio: 0.05,
+      hasShadow: true,
     ),
   ];
 }

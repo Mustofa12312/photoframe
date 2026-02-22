@@ -7,7 +7,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/providers/editor_provider.dart';
 import '../../../../core/models/frame_template.dart';
+import '../../../../core/models/canvas_layer.dart';
 import '../../../../core/utils/exif_util.dart';
+import 'draggable_layer_widget.dart';
 
 class WatermarkCanvas extends StatelessWidget {
   final ScreenshotController screenshotController;
@@ -63,11 +65,24 @@ class WatermarkCanvas extends StatelessWidget {
                 provider.selectedImage!.path,
               );
               break;
+            case FrameLayout.custom:
+              layoutWidget = _buildCustomLayout(
+                style,
+                brand,
+                exif,
+                provider.selectedImage!.path,
+                provider.layers,
+              );
+              break;
           }
 
           return Container(
             color: style.backgroundColor,
-            padding: EdgeInsets.all(baseWidth * style.paddingRatio),
+            padding: EdgeInsets.all(
+              style.layout == FrameLayout.custom
+                  ? 0
+                  : baseWidth * style.paddingRatio,
+            ),
             child: layoutWidget,
           );
         },
@@ -204,6 +219,24 @@ class WatermarkCanvas extends StatelessWidget {
         parts.add('ISO ${exif.isoSpeedRatings}');
     }
     return parts.join('   ');
+  }
+
+  // ==========================================
+  // TEMPLATE 4: CUSTOM CANVA MODE
+  // ==========================================
+  Widget _buildCustomLayout(
+    FrameStyle style,
+    DeviceBrand brand,
+    ExifData? exif,
+    String imagePath,
+    List<CanvasLayer> layers,
+  ) {
+    return Stack(
+      children: [
+        _buildImageWithShadow(style, imagePath, applyShadow: false),
+        ...layers.map((layer) => DraggableLayerWidget(layer: layer)).toList(),
+      ],
+    );
   }
 
   // ==========================================
@@ -366,7 +399,7 @@ class WatermarkCanvas extends StatelessWidget {
     // Apply Photo Filters
     if (style.filter != PhotoFilter.none) {
       imageWidget = ColorFiltered(
-        colorFilter: _getColorFilterMatrix(style.filter),
+        colorFilter: _getColorFilterMatrix(style.filter, style.filterIntensity),
         child: imageWidget,
       );
     }
@@ -388,10 +421,50 @@ class WatermarkCanvas extends StatelessWidget {
     );
   }
 
-  ColorFilter _getColorFilterMatrix(PhotoFilter filter) {
+  List<double> _interpolateMatrix(List<double> target, double intensity) {
+    const List<double> identityMatrix = [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+    ];
+
+    if (intensity >= 1.0) return target;
+    if (intensity <= 0.0) return identityMatrix;
+
+    List<double> result = List<double>.filled(20, 0);
+    for (int i = 0; i < 20; i++) {
+      result[i] =
+          identityMatrix[i] + (target[i] - identityMatrix[i]) * intensity;
+    }
+    return result;
+  }
+
+  ColorFilter _getColorFilterMatrix(PhotoFilter filter, double intensity) {
+    if (filter == PhotoFilter.none) {
+      return const ColorFilter.mode(Colors.transparent, BlendMode.multiply);
+    }
+
+    List<double> targetMatrix;
     switch (filter) {
       case PhotoFilter.blackAndWhite:
-        return const ColorFilter.matrix([
+        targetMatrix = const [
           0.2126,
           0.7152,
           0.0722,
@@ -412,9 +485,10 @@ class WatermarkCanvas extends StatelessWidget {
           0,
           1,
           0,
-        ]);
+        ];
+        break;
       case PhotoFilter.sepia:
-        return const ColorFilter.matrix([
+        targetMatrix = const [
           0.393,
           0.769,
           0.189,
@@ -435,9 +509,10 @@ class WatermarkCanvas extends StatelessWidget {
           0,
           1,
           0,
-        ]);
+        ];
+        break;
       case PhotoFilter.vintage:
-        return const ColorFilter.matrix([
+        targetMatrix = const [
           1.2,
           0,
           0,
@@ -458,9 +533,10 @@ class WatermarkCanvas extends StatelessWidget {
           0,
           1,
           0,
-        ]);
+        ];
+        break;
       case PhotoFilter.warm:
-        return const ColorFilter.matrix([
+        targetMatrix = const [
           1.1,
           0,
           0,
@@ -481,9 +557,10 @@ class WatermarkCanvas extends StatelessWidget {
           0,
           1,
           0,
-        ]);
+        ];
+        break;
       case PhotoFilter.cool:
-        return const ColorFilter.matrix([
+        targetMatrix = const [
           0.85,
           0,
           0,
@@ -504,10 +581,13 @@ class WatermarkCanvas extends StatelessWidget {
           0,
           1,
           0,
-        ]);
-      case PhotoFilter.none:
+        ];
+        break;
+      default:
         return const ColorFilter.mode(Colors.transparent, BlendMode.multiply);
     }
+
+    return ColorFilter.matrix(_interpolateMatrix(targetMatrix, intensity));
   }
 
   // Exif text building is now handled inside _buildClassicLayout directly
