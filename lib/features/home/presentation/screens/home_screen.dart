@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/image_picker_util.dart';
 import '../../../../core/utils/exif_util.dart';
+import '../../../../core/models/frame_template.dart';
 import '../../../editor/presentation/screens/editor_screen.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/editor_provider.dart';
@@ -39,7 +40,11 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
-  Future<void> _pickAndNavigate(BuildContext context, bool fromCamera) async {
+  Future<void> _pickAndNavigate(
+    BuildContext context,
+    bool fromCamera, {
+    FrameStyle? preset,
+  }) async {
     final xFile = fromCamera
         ? await ImagePickerUtil.pickFromCamera()
         : await ImagePickerUtil.pickFromGallery();
@@ -52,6 +57,10 @@ class _HomeScreenState extends State<HomeScreen>
 
       // Update Provider
       context.read<EditorProvider>().setImage(xFile, exif);
+
+      if (preset != null) {
+        context.read<EditorProvider>().updateStyle(preset);
+      }
 
       // Navigate to Editor
       Navigator.push(
@@ -133,7 +142,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildGalleryTab(String title) {
-    // Placeholder for masonry grid of templates
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -142,41 +150,33 @@ class _HomeScreenState extends State<HomeScreen>
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(child: _buildTemplateCard()),
-            const SizedBox(width: 16),
-            Expanded(child: _buildTemplateCard()),
-          ],
-        ),
-        const SizedBox(height: 24),
-        const Text(
-          'Last Updated',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(child: _buildTemplateCard()),
-            const SizedBox(width: 16),
-            Expanded(child: _buildTemplateCard()),
-          ],
+        GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 4 / 3,
+          ),
+          itemCount: TemplatePresets.allTemplates.length,
+          itemBuilder: (context, index) {
+            return _buildTemplateCard(TemplatePresets.allTemplates[index]);
+          },
         ),
       ],
     );
   }
 
-  Widget _buildTemplateCard() {
-    return AspectRatio(
-      aspectRatio: 4 / 3,
+  Widget _buildTemplateCard(FrameStyle preset) {
+    return InkWell(
+      onTap: () => _pickAndNavigate(context, false, preset: preset),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.surfaceColor,
+          color: preset.backgroundColor,
           borderRadius: BorderRadius.circular(12),
-          image: const DecorationImage(
-            image: NetworkImage('https://picsum.photos/400/300'), // Placeholder
-            fit: BoxFit.cover,
-          ),
+          border: Border.all(color: Colors.white24, width: 1),
         ),
         child: Align(
           alignment: Alignment.bottomCenter,
@@ -187,10 +187,10 @@ class _HomeScreenState extends State<HomeScreen>
               color: Colors.white,
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
             ),
-            child: const Center(
+            child: Center(
               child: Text(
-                'Template',
-                style: TextStyle(
+                preset.layout.name.toUpperCase(),
+                style: const TextStyle(
                   color: Colors.black,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,

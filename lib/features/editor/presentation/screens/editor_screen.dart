@@ -102,7 +102,11 @@ class _EditorScreenState extends State<EditorScreen> {
                   'font',
                   null,
                 ), // Placeholder
-                _buildToolIcon(Icons.crop, 'crop', null), // Placeholder
+                _buildToolIcon(
+                  Icons.dashboard,
+                  'style',
+                  () => _showTemplatePicker(context),
+                ),
               ],
             ),
           ),
@@ -197,6 +201,55 @@ class _EditorScreenState extends State<EditorScreen> {
                 }).toList(),
               ),
             ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showTemplatePicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return Container(
+          color: AppTheme.surfaceColor,
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Select Style',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: TemplatePresets.allTemplates.length,
+                  itemBuilder: (context, index) {
+                    final preset = TemplatePresets.allTemplates[index];
+                    return ListTile(
+                      leading: const Icon(
+                        Icons.style,
+                        color: AppTheme.primaryColor,
+                      ),
+                      title: Text(
+                        preset.layout.name.toUpperCase(),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      onTap: () {
+                        context.read<EditorProvider>().updateStyle(preset);
+                        Navigator.pop(ctx);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         );
       },
