@@ -26,43 +26,51 @@ class WatermarkCanvas extends StatelessWidget {
     final exif = provider.exifData;
     final brand = provider.activeBrand;
 
-    // Select the builder based on the layout type
-    Widget layoutWidget;
-    switch (style.layout) {
-      case FrameLayout.polaroid:
-        layoutWidget = _buildPolaroidLayout(
-          style,
-          brand,
-          exif,
-          provider.selectedImage!.path,
-        );
-        break;
-      case FrameLayout.minimalist:
-        layoutWidget = _buildMinimalistLayout(
-          style,
-          brand,
-          exif,
-          provider.selectedImage!.path,
-        );
-        break;
-      case FrameLayout.deviceClassic:
-        layoutWidget = _buildClassicLayout(
-          style,
-          brand,
-          exif,
-          provider.selectedImage!.path,
-        );
-        break;
-    }
-
     return Screenshot(
       controller: screenshotController,
-      child: Container(
-        color: style.backgroundColor,
-        padding: EdgeInsets.all(
-          MediaQuery.of(context).size.width * style.paddingRatio,
-        ),
-        child: layoutWidget,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Determine realistic width constraints instead of depending blindly on the total screen size
+          final double baseWidth =
+              constraints.maxWidth > 0 && constraints.maxWidth < double.infinity
+              ? constraints.maxWidth
+              : MediaQuery.of(context).size.width;
+
+          // Select the builder based on the layout type
+          Widget layoutWidget;
+          switch (style.layout) {
+            case FrameLayout.polaroid:
+              layoutWidget = _buildPolaroidLayout(
+                style,
+                brand,
+                exif,
+                provider.selectedImage!.path,
+              );
+              break;
+            case FrameLayout.minimalist:
+              layoutWidget = _buildMinimalistLayout(
+                style,
+                brand,
+                exif,
+                provider.selectedImage!.path,
+              );
+              break;
+            case FrameLayout.deviceClassic:
+              layoutWidget = _buildClassicLayout(
+                style,
+                brand,
+                exif,
+                provider.selectedImage!.path,
+              );
+              break;
+          }
+
+          return Container(
+            color: style.backgroundColor,
+            padding: EdgeInsets.all(baseWidth * style.paddingRatio),
+            child: layoutWidget,
+          );
+        },
       ),
     );
   }
