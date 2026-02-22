@@ -23,6 +23,28 @@ class ExifData {
     this.dateTimeOriginal = '',
   });
 
+  ExifData copyWith({
+    String? cameraMake,
+    String? cameraModel,
+    String? lensModel,
+    String? focalLength,
+    String? fNumber,
+    String? exposureTime,
+    String? isoSpeedRatings,
+    String? dateTimeOriginal,
+  }) {
+    return ExifData(
+      cameraMake: cameraMake ?? this.cameraMake,
+      cameraModel: cameraModel ?? this.cameraModel,
+      lensModel: lensModel ?? this.lensModel,
+      focalLength: focalLength ?? this.focalLength,
+      fNumber: fNumber ?? this.fNumber,
+      exposureTime: exposureTime ?? this.exposureTime,
+      isoSpeedRatings: isoSpeedRatings ?? this.isoSpeedRatings,
+      dateTimeOriginal: dateTimeOriginal ?? this.dateTimeOriginal,
+    );
+  }
+
   @override
   String toString() {
     return 'Make: $cameraMake, Model: $cameraModel, Lens: $lensModel, '

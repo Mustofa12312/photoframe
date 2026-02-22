@@ -136,35 +136,48 @@ class _EditorScreenState extends State<EditorScreen> {
                       borderRadius: BorderRadius.circular(40),
                       border: Border.all(color: Colors.white12, width: 1.5),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildToolIcon(
-                          Icons.layers_outlined,
-                          'Brand',
-                          () => _showDevicePicker(context),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildToolIcon(
+                              Icons.layers_outlined,
+                              'Brand',
+                              () => _showDevicePicker(context),
+                            ),
+                            _buildToolIcon(
+                              Icons.format_color_fill,
+                              'Color',
+                              () => _showColorPicker(context),
+                            ),
+                            _buildToolIcon(
+                              Icons.camera_enhance_outlined,
+                              'Filter',
+                              () => _showFilterPicker(context),
+                            ),
+                            _buildToolIcon(
+                              Icons.dashboard_customize_outlined,
+                              'Style',
+                              () => _showTemplatePicker(context),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildToolIcon(
+                              Icons.tune,
+                              'Data',
+                              () => _showDataEditor(context),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildToolIcon(
+                              Icons.crop_free,
+                              'Size',
+                              () => _showSizeSlider(context),
+                            ),
+                          ],
                         ),
-                        _buildToolIcon(
-                          Icons.format_color_fill,
-                          'Color',
-                          () => _showColorPicker(context),
-                        ),
-                        _buildToolIcon(
-                          Icons.camera_enhance_outlined,
-                          'Filter',
-                          () => _showFilterPicker(context),
-                        ),
-                        _buildToolIcon(
-                          Icons.dashboard_customize_outlined,
-                          'Style',
-                          () => _showTemplatePicker(context),
-                        ),
-                        _buildToolIcon(
-                          Icons.crop_free,
-                          'Size',
-                          () => _showSizeSlider(context),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -427,6 +440,137 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  void _showDataEditor(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return _DataEditorSheet();
+      },
+    );
+  }
+}
+
+class _DataEditorSheet extends StatefulWidget {
+  @override
+  _DataEditorSheetState createState() => _DataEditorSheetState();
+}
+
+class _DataEditorSheetState extends State<_DataEditorSheet> {
+  late TextEditingController _textController;
+
+  @override
+  void initState() {
+    super.initState();
+    final provider = context.read<EditorProvider>();
+    _textController = TextEditingController(
+      text: provider.currentStyle.customText ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = MediaQuery.of(context).viewInsets.bottom;
+    return Consumer<EditorProvider>(
+      builder: (context, provider, child) {
+        final style = provider.currentStyle;
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          child: Container(
+            color: AppTheme.surfaceColor,
+            padding: EdgeInsets.fromLTRB(20, 20, 20, padding + 20),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Custom Data & Toggles',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: _textController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Custom Signature/Brand Text',
+                      labelStyle: const TextStyle(color: Colors.white54),
+                      hintText: 'e.g., Shot on Potato',
+                      hintStyle: const TextStyle(color: Colors.white24),
+                      enabledBorder: const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white24),
+                      ),
+                      focusedBorder: const UnderlineInputBorder(
+                        borderSide: BorderSide(color: AppTheme.primaryColor),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: const Icon(
+                          Icons.check,
+                          color: AppTheme.primaryColor,
+                        ),
+                        onPressed: () {
+                          provider.updateStyle(
+                            style.copyWith(customText: _textController.text),
+                          );
+                          FocusScope.of(context).unfocus();
+                        },
+                      ),
+                    ),
+                    onSubmitted: (val) {
+                      provider.updateStyle(style.copyWith(customText: val));
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  SwitchListTile(
+                    title: const Text(
+                      'Show Technical Specs (ISO, Shutter)',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    activeColor: AppTheme.primaryColor,
+                    value: style.showExposure,
+                    onChanged: (val) =>
+                        provider.updateStyle(style.copyWith(showExposure: val)),
+                  ),
+                  SwitchListTile(
+                    title: const Text(
+                      'Show Lens Focal Length',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    activeColor: AppTheme.primaryColor,
+                    value: style.showLens,
+                    onChanged: (val) =>
+                        provider.updateStyle(style.copyWith(showLens: val)),
+                  ),
+                  SwitchListTile(
+                    title: const Text(
+                      'Show Date/Time',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    activeColor: AppTheme.primaryColor,
+                    value: style.showDate,
+                    onChanged: (val) =>
+                        provider.updateStyle(style.copyWith(showDate: val)),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );

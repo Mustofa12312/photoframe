@@ -224,11 +224,17 @@ enum PhotoFilter { none, sepia, blackAndWhite, vintage, cool, warm }
 class FrameStyle {
   final FrameLayout layout;
   final Color backgroundColor;
-  final double paddingRatio; // padding as a ratio of image width e.g., 0.05
-  final double bottomBarHeightRatio; // space for exif info
+  final double paddingRatio;
+  final double bottomBarHeightRatio;
   final bool hasShadow;
   final DeviceBrand brandOverride;
   final PhotoFilter filter;
+
+  // Advanced toggles
+  final bool showDate;
+  final bool showExposure;
+  final bool showLens;
+  final String? customText;
 
   const FrameStyle({
     this.layout = FrameLayout.deviceClassic,
@@ -238,6 +244,10 @@ class FrameStyle {
     this.hasShadow = true,
     this.brandOverride = DeviceBrand.unknown,
     this.filter = PhotoFilter.none,
+    this.showDate = true,
+    this.showExposure = true,
+    this.showLens = true,
+    this.customText,
   });
 
   FrameStyle copyWith({
@@ -248,6 +258,10 @@ class FrameStyle {
     bool? hasShadow,
     DeviceBrand? brandOverride,
     PhotoFilter? filter,
+    bool? showDate,
+    bool? showExposure,
+    bool? showLens,
+    String? customText,
   }) {
     return FrameStyle(
       layout: layout ?? this.layout,
@@ -257,6 +271,10 @@ class FrameStyle {
       hasShadow: hasShadow ?? this.hasShadow,
       brandOverride: brandOverride ?? this.brandOverride,
       filter: filter ?? this.filter,
+      showDate: showDate ?? this.showDate,
+      showExposure: showExposure ?? this.showExposure,
+      showLens: showLens ?? this.showLens,
+      customText: customText ?? this.customText,
     );
   }
 }

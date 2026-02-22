@@ -84,7 +84,7 @@ class WatermarkCanvas extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _buildBrandLogo(brand, _getTextColor(style)),
+            _buildBrandLogo(brand, _getTextColor(style), style),
             if (exif != null) _buildExifTextRight(exif, style),
           ],
         ),
@@ -141,9 +141,9 @@ class WatermarkCanvas extends StatelessWidget {
         Center(
           child: Column(
             children: [
-              _buildBrandLogo(brand, _getTextColor(style)),
+              _buildBrandLogo(brand, _getTextColor(style), style),
               const SizedBox(height: 8),
-              if (exif != null)
+              if (exif != null && style.showExposure)
                 Text(
                   '${exif.focalLength} | f/${exif.fNumber} | ISO${exif.isoSpeedRatings}',
                   style: TextStyle(
@@ -169,7 +169,20 @@ class WatermarkCanvas extends StatelessWidget {
         : Colors.white;
   }
 
-  Widget _buildBrandLogo(DeviceBrand brand, Color color) {
+  Widget _buildBrandLogo(DeviceBrand brand, Color color, FrameStyle style) {
+    if (style.customText != null && style.customText!.isNotEmpty) {
+      return Text(
+        style.customText!,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w900,
+          fontStyle: FontStyle.italic,
+          fontSize: 24,
+          letterSpacing: 2.0,
+        ),
+      );
+    }
+
     if (brand.svgIconUrl != null) {
       return SizedBox(
         height: 24,
@@ -342,24 +355,37 @@ class WatermarkCanvas extends StatelessWidget {
 
   Widget _buildExifTextRight(ExifData exif, FrameStyle style) {
     final textColor = _getTextColor(style);
+
+    String topText = '';
+    if (style.showLens) {
+      topText += '${exif.focalLength}   ';
+    }
+    if (style.showExposure) {
+      topText +=
+          'f/${exif.fNumber}   ${exif.exposureTime}   ISO${exif.isoSpeedRatings}';
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          '${exif.focalLength}   f/${exif.fNumber}   ${exif.exposureTime}   ISO${exif.isoSpeedRatings}',
-          style: TextStyle(
-            color: textColor,
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 1.2,
+        if (topText.trim().isNotEmpty)
+          Text(
+            topText.trimRight(),
+            style: TextStyle(
+              color: textColor,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 1.2,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          exif.dateTimeOriginal,
-          style: TextStyle(color: textColor.withOpacity(0.6), fontSize: 9),
-        ),
+        if (topText.trim().isNotEmpty && style.showDate)
+          const SizedBox(height: 4),
+        if (style.showDate)
+          Text(
+            exif.dateTimeOriginal,
+            style: TextStyle(color: textColor.withOpacity(0.6), fontSize: 9),
+          ),
       ],
     );
   }
