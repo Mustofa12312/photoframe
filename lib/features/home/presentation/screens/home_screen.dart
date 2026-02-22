@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/image_picker_util.dart';
@@ -73,131 +74,270 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _currentIndex == 0
-          ? AppBar(
-              title: const Text(
-                'Photo Frame',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              bottom: TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                indicatorColor: AppTheme.primaryColor,
-                labelColor: Colors.black,
-                unselectedLabelColor: Colors.white70,
-                indicator: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: AppTheme.primaryColor,
-                ),
-                indicatorPadding: const EdgeInsets.symmetric(
-                  horizontal: -16,
-                  vertical: 8,
-                ),
-                tabs: _tabs.map((t) => Tab(text: t)).toList(),
-              ),
-            )
-          : null,
+      backgroundColor: AppTheme.backgroundColor,
       body: _currentIndex == 0
-          ? TabBarView(
-              controller: _tabController,
-              children: _tabs.map((tab) => _buildGalleryTab(tab)).toList(),
+          ? CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  expandedHeight: 120.0,
+                  floating: true,
+                  pinned: true,
+                  backgroundColor: AppTheme.surfaceColor.withOpacity(0.9),
+                  flexibleSpace: FlexibleSpaceBar(
+                    titlePadding: const EdgeInsets.only(left: 20, bottom: 60),
+                    title: const Text(
+                      'Photo Frame',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 22,
+                        letterSpacing: 1.2,
+                        color: Colors.white,
+                      ),
+                    ),
+                    background: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppTheme.surfaceColor,
+                            AppTheme.backgroundColor,
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                  ),
+                  bottom: PreferredSize(
+                    preferredSize: const Size.fromHeight(50),
+                    child: Container(
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.only(left: 16, bottom: 8),
+                      child: TabBar(
+                        controller: _tabController,
+                        isScrollable: true,
+                        dividerColor: Colors.transparent,
+                        indicator: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                          color: AppTheme.primaryColor.withOpacity(0.15),
+                          border: Border.all(
+                            color: AppTheme.primaryColor,
+                            width: 1,
+                          ),
+                        ),
+                        labelColor: AppTheme.primaryColor,
+                        unselectedLabelColor: Colors.white54,
+                        labelStyle: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        tabs: _tabs
+                            .map(
+                              (t) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                child: Tab(text: t),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  ),
+                ),
+                SliverFillRemaining(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: _tabs
+                        .map((tab) => _buildGalleryTab(tab))
+                        .toList(),
+                  ),
+                ),
+              ],
             )
-          : const ProfileScreen(), // Assuming index 2 is Profile
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          if (index == 1) {
-            // Camera FAB handles the middle action, but if tapped here:
-            _pickAndNavigate(context, true);
-          } else {
-            setState(() => _currentIndex = index);
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.crop_square),
-            label: 'Frame',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.camera_alt, color: Colors.transparent),
-            label: '',
-          ), // Spacer for FAB
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'User',
-          ),
-        ],
-      ),
+          : const ProfileScreen(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _pickAndNavigate(
-          context,
-          false,
-        ), // Or true for camera, depending on preference
-        backgroundColor: AppTheme.primaryColor,
-        child: const Icon(Icons.camera_alt, color: Colors.black),
-        elevation: 4,
+      floatingActionButton: Container(
+        height: 64,
+        width: 64,
+        margin: const EdgeInsets.only(top: 30),
+        child: FloatingActionButton(
+          onPressed: () => _pickAndNavigate(context, false),
+          backgroundColor: AppTheme.primaryColor,
+          elevation: 8,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Icon(Icons.add_a_photo, color: Colors.black, size: 28),
+        ),
+      ),
+      bottomNavigationBar: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            backgroundColor: AppTheme.surfaceColor.withOpacity(0.8),
+            elevation: 0,
+            selectedItemColor: AppTheme.primaryColor,
+            unselectedItemColor: Colors.white54,
+            showSelectedLabels: false,
+            showUnselectedLabels: false,
+            onTap: (index) {
+              if (index == 1) {
+                _pickAndNavigate(context, true);
+              } else {
+                setState(() => _currentIndex = index);
+              }
+            },
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.view_carousel_rounded, size: 28),
+                label: 'Gallery',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.camera, color: Colors.transparent),
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person_outline_rounded, size: 28),
+                label: 'Profile',
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildGalleryTab(String title) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
       children: [
-        Text(
-          'Hot Frame ($title)',
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Featured Templates',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 16),
+          ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         GridView.builder(
           physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 4 / 3,
+            crossAxisSpacing: 20,
+            mainAxisSpacing: 20,
+            childAspectRatio: 0.75, // Make them tall, elegant portrait cards
           ),
           itemCount: TemplatePresets.allTemplates.length,
           itemBuilder: (context, index) {
-            return _buildTemplateCard(TemplatePresets.allTemplates[index]);
+            return _buildTemplateCard(
+              TemplatePresets.allTemplates[index],
+              index,
+            );
           },
         ),
+        const SizedBox(height: 100), // padding for floating action button
       ],
     );
   }
 
-  Widget _buildTemplateCard(FrameStyle preset) {
+  Widget _buildTemplateCard(FrameStyle preset, int index) {
     return InkWell(
       onTap: () => _pickAndNavigate(context, false, preset: preset),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
           color: preset.backgroundColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white24, width: 1),
-        ),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            height: 30,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
             ),
-            child: Center(
-              child: Text(
-                preset.layout.name.toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Mock Photo inside the frame
+            Positioned(
+              top: preset.layout == FrameLayout.polaroid ? 16 : 30,
+              left: 16,
+              right: 16,
+              bottom: preset.layout == FrameLayout.polaroid ? 60 : 40,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceColor,
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: preset.hasShadow
+                      ? [BoxShadow(color: Colors.black12, blurRadius: 10)]
+                      : null,
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.photo_library_outlined,
+                    color: Colors.white24,
+                    size: 32,
+                  ),
                 ),
               ),
             ),
-          ),
+            // Template Info Strip
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(20),
+                ),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: Container(
+                    height: 50,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      border: Border(
+                        top: BorderSide(color: Colors.white12, width: 1),
+                      ),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          preset.layout.name.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Style ${index + 1}',
+                          style: TextStyle(
+                            color: AppTheme.primaryColor,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

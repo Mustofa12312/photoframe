@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:screenshot/screenshot.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/providers/editor_provider.dart';
 import '../../../../core/models/frame_template.dart';
 import '../../../../core/utils/exif_util.dart';
@@ -56,9 +57,9 @@ class WatermarkCanvas extends StatelessWidget {
       controller: screenshotController,
       child: Container(
         color: style.backgroundColor,
-        padding: const EdgeInsets.all(
-          20,
-        ), // Responsive padding should be calculated here eventually
+        padding: EdgeInsets.all(
+          MediaQuery.of(context).size.width * style.paddingRatio,
+        ),
         child: layoutWidget,
       ),
     );
@@ -83,16 +84,7 @@ class WatermarkCanvas extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              brand.displayName,
-              style: TextStyle(
-                color: _getTextColor(style),
-                fontWeight: FontWeight.w900,
-                fontStyle: FontStyle.italic,
-                fontSize: 24,
-                letterSpacing: 2.0,
-              ),
-            ),
+            _buildBrandLogo(brand, _getTextColor(style)),
             if (exif != null) _buildExifTextRight(exif, style),
           ],
         ),
@@ -149,15 +141,7 @@ class WatermarkCanvas extends StatelessWidget {
         Center(
           child: Column(
             children: [
-              Text(
-                '— ${brand.displayName} —',
-                style: TextStyle(
-                  color: _getTextColor(style),
-                  fontWeight: FontWeight.w300,
-                  fontSize: 14,
-                  letterSpacing: 4.0,
-                ),
-              ),
+              _buildBrandLogo(brand, _getTextColor(style)),
               const SizedBox(height: 8),
               if (exif != null)
                 Text(
@@ -183,6 +167,28 @@ class WatermarkCanvas extends StatelessWidget {
     return style.backgroundColor.computeLuminance() > 0.5
         ? Colors.black
         : Colors.white;
+  }
+
+  Widget _buildBrandLogo(DeviceBrand brand, Color color) {
+    if (brand.svgIconUrl != null) {
+      return SizedBox(
+        height: 24,
+        child: SvgPicture.network(
+          brand.svgIconUrl!,
+          colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+        ),
+      );
+    }
+    return Text(
+      brand.displayName,
+      style: TextStyle(
+        color: color,
+        fontWeight: FontWeight.w900,
+        fontStyle: FontStyle.italic,
+        fontSize: 24,
+        letterSpacing: 2.0,
+      ),
+    );
   }
 
   Widget _buildImageWithShadow(FrameStyle style, String imagePath) {

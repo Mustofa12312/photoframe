@@ -95,43 +95,123 @@ extension DeviceBrandExtension on DeviceBrand {
     }
   }
 
+  String? get svgIconUrl {
+    switch (this) {
+      case DeviceBrand.apple:
+        return 'https://cdn.simpleicons.org/apple';
+      case DeviceBrand.samsung:
+        return 'https://cdn.simpleicons.org/samsung';
+      case DeviceBrand.google:
+        return 'https://cdn.simpleicons.org/google';
+      case DeviceBrand.xiaomi:
+        return 'https://cdn.simpleicons.org/xiaomi';
+      case DeviceBrand.oppo:
+        return 'https://cdn.simpleicons.org/oppo';
+      case DeviceBrand.vivo:
+        return 'https://cdn.simpleicons.org/vivo';
+      case DeviceBrand.oneplus:
+        return 'https://cdn.simpleicons.org/oneplus';
+      case DeviceBrand.asus:
+        return 'https://cdn.simpleicons.org/asus';
+      case DeviceBrand.sonyPhone:
+      case DeviceBrand.sony:
+        return 'https://cdn.simpleicons.org/sony';
+      case DeviceBrand.motorola:
+        return 'https://cdn.simpleicons.org/motorola';
+      case DeviceBrand.huawei:
+        return 'https://cdn.simpleicons.org/huawei';
+      case DeviceBrand.canon:
+        return 'https://cdn.simpleicons.org/canon';
+      case DeviceBrand.nikon:
+        return 'https://cdn.simpleicons.org/nikon';
+      case DeviceBrand.fujifilm:
+        return 'https://cdn.simpleicons.org/fujifilm';
+      case DeviceBrand.panasonic:
+      case DeviceBrand.lumix:
+        return 'https://cdn.simpleicons.org/panasonic';
+      default:
+        return null;
+    }
+  }
+
   // Helper to parse from EXIF make
   static DeviceBrand fromMake(String make) {
     final lower = make.toLowerCase();
 
     // Phones
-    if (lower.contains('apple') || lower.contains('iphone'))
+    if (lower.contains('apple') || lower.contains('iphone')) {
       return DeviceBrand.apple;
-    if (lower.contains('samsung')) return DeviceBrand.samsung;
-    if (lower.contains('google') || lower.contains('pixel'))
+    }
+    if (lower.contains('samsung')) {
+      return DeviceBrand.samsung;
+    }
+    if (lower.contains('google') || lower.contains('pixel')) {
       return DeviceBrand.google;
+    }
     if (lower.contains('xiaomi') ||
         lower.contains('redmi') ||
-        lower.contains('poco'))
+        lower.contains('poco')) {
       return DeviceBrand.xiaomi;
-    if (lower.contains('oppo')) return DeviceBrand.oppo;
-    if (lower.contains('vivo')) return DeviceBrand.vivo;
-    if (lower.contains('oneplus')) return DeviceBrand.oneplus;
-    if (lower.contains('realme')) return DeviceBrand.realme;
-    if (lower.contains('asus')) return DeviceBrand.asus;
-    if (lower.contains('motorola') || lower.contains('moto'))
+    }
+    if (lower.contains('oppo')) {
+      return DeviceBrand.oppo;
+    }
+    if (lower.contains('vivo')) {
+      return DeviceBrand.vivo;
+    }
+    if (lower.contains('oneplus')) {
+      return DeviceBrand.oneplus;
+    }
+    if (lower.contains('realme')) {
+      return DeviceBrand.realme;
+    }
+    if (lower.contains('asus')) {
+      return DeviceBrand.asus;
+    }
+    if (lower.contains('motorola') || lower.contains('moto')) {
       return DeviceBrand.motorola;
-    if (lower.contains('huawei')) return DeviceBrand.huawei;
+    }
+    if (lower.contains('huawei')) {
+      return DeviceBrand.huawei;
+    }
 
     // Cameras
-    if (lower.contains('sony')) return DeviceBrand.sony;
-    if (lower.contains('canon')) return DeviceBrand.canon;
-    if (lower.contains('nikon')) return DeviceBrand.nikon;
-    if (lower.contains('fuji')) return DeviceBrand.fujifilm;
-    if (lower.contains('leica')) return DeviceBrand.leica;
-    if (lower.contains('panasonic') || lower.contains('lumix'))
+    if (lower.contains('sony')) {
+      return DeviceBrand.sony;
+    }
+    if (lower.contains('canon')) {
+      return DeviceBrand.canon;
+    }
+    if (lower.contains('nikon')) {
+      return DeviceBrand.nikon;
+    }
+    if (lower.contains('fuji')) {
+      return DeviceBrand.fujifilm;
+    }
+    if (lower.contains('leica')) {
+      return DeviceBrand.leica;
+    }
+    if (lower.contains('panasonic') || lower.contains('lumix')) {
       return DeviceBrand.panasonic;
-    if (lower.contains('olympus')) return DeviceBrand.olympus;
-    if (lower.contains('hasselblad')) return DeviceBrand.hasselblad;
-    if (lower.contains('pentax')) return DeviceBrand.pentax;
-    if (lower.contains('ricoh')) return DeviceBrand.ricoh;
-    if (lower.contains('sigma')) return DeviceBrand.sigma;
-    if (lower.contains('tamron')) return DeviceBrand.tamron;
+    }
+    if (lower.contains('olympus')) {
+      return DeviceBrand.olympus;
+    }
+    if (lower.contains('hasselblad')) {
+      return DeviceBrand.hasselblad;
+    }
+    if (lower.contains('pentax')) {
+      return DeviceBrand.pentax;
+    }
+    if (lower.contains('ricoh')) {
+      return DeviceBrand.ricoh;
+    }
+    if (lower.contains('sigma')) {
+      return DeviceBrand.sigma;
+    }
+    if (lower.contains('tamron')) {
+      return DeviceBrand.tamron;
+    }
 
     return DeviceBrand.unknown;
   }

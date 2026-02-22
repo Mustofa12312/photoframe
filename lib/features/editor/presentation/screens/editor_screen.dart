@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:screenshot/screenshot.dart';
@@ -39,8 +40,28 @@ class _EditorScreenState extends State<EditorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black, // Sleek dark canvas
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Editor'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.white,
+            size: 20,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Edit. Share.',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.normal,
+            letterSpacing: 1.2,
+          ),
+        ),
         centerTitle: true,
         actions: [
           if (_isExporting)
@@ -58,20 +79,39 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             )
           else
-            IconButton(
-              icon: const Icon(Icons.download),
-              onPressed: _exportImage,
+            Container(
+              margin: const EdgeInsets.only(right: 12, top: 10, bottom: 10),
+              child: ElevatedButton.icon(
+                onPressed: _exportImage,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.black,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                icon: const Icon(Icons.file_download_outlined, size: 18),
+                label: const Text(
+                  'Save',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // Canvas Area
-          Expanded(
+          // Canvas Area - Pan & Zoom enabled
+          InteractiveViewer(
+            boundaryMargin: const EdgeInsets.all(100),
+            minScale: 0.5,
+            maxScale: 3.0,
             child: Center(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(24.0),
                   child: WatermarkCanvas(
                     screenshotController: _screenshotController,
                   ),
@@ -80,34 +120,55 @@ class _EditorScreenState extends State<EditorScreen> {
             ),
           ),
 
-          // Bottom Tools
-          Container(
-            height: 80,
-            color: AppTheme.surfaceColor,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildToolIcon(
-                  Icons.layers,
-                  'device',
-                  () => _showDevicePicker(context),
+          // Floating Bottom Tools
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 30, left: 24, right: 24),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(40),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    height: 70,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceColor.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(40),
+                      border: Border.all(color: Colors.white12, width: 1.5),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildToolIcon(
+                          Icons.layers_outlined,
+                          'Brand',
+                          () => _showDevicePicker(context),
+                        ),
+                        _buildToolIcon(
+                          Icons.format_color_fill,
+                          'Color',
+                          () => _showColorPicker(context),
+                        ),
+                        _buildToolIcon(
+                          Icons.camera_enhance_outlined,
+                          'Filter',
+                          () => _showFilterPicker(context),
+                        ),
+                        _buildToolIcon(
+                          Icons.dashboard_customize_outlined,
+                          'Style',
+                          () => _showTemplatePicker(context),
+                        ),
+                        _buildToolIcon(
+                          Icons.crop_free,
+                          'Size',
+                          () => _showSizeSlider(context),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                _buildToolIcon(
-                  Icons.color_lens,
-                  'color',
-                  () => _showColorPicker(context),
-                ),
-                _buildToolIcon(
-                  Icons.filter_b_and_w,
-                  'filter',
-                  () => _showFilterPicker(context),
-                ),
-                _buildToolIcon(
-                  Icons.dashboard,
-                  'style',
-                  () => _showTemplatePicker(context),
-                ),
-              ],
+              ),
             ),
           ),
         ],
@@ -118,19 +179,30 @@ class _EditorScreenState extends State<EditorScreen> {
   Widget _buildToolIcon(IconData icon, String label, VoidCallback? onTap) {
     return InkWell(
       onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: onTap != null ? Colors.white : Colors.white30),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: onTap != null ? Colors.white : Colors.white30,
-              fontSize: 12,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: onTap != null ? Colors.white : Colors.white24,
+              size: 22,
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              label.toUpperCase(),
+              style: TextStyle(
+                color: onTap != null ? Colors.white : Colors.white24,
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -305,6 +377,56 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _showSizeSlider(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return Consumer<EditorProvider>(
+          builder: (context, provider, child) {
+            final paddingRatio = provider.currentStyle.paddingRatio;
+            return Container(
+              color: AppTheme.surfaceColor,
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Adjust Frame Size',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      const Icon(Icons.zoom_out_map, color: Colors.white54),
+                      Expanded(
+                        child: Slider(
+                          value: paddingRatio,
+                          min: 0.0,
+                          max: 0.25,
+                          activeColor: AppTheme.primaryColor,
+                          inactiveColor: Colors.white24,
+                          onChanged: (val) {
+                            provider.updateStyle(
+                              provider.currentStyle.copyWith(paddingRatio: val),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
