@@ -1,11 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 import '../../../../core/providers/editor_provider.dart';
 import '../../../../core/models/frame_template.dart';
 import '../../../../core/utils/exif_util.dart';
-import 'dart:io';
 
 class WatermarkCanvas extends StatelessWidget {
   final ScreenshotController screenshotController;
@@ -66,7 +68,7 @@ class WatermarkCanvas extends StatelessWidget {
   }
 
   // ==========================================
-  // TEMPLATE 1: CLASSIC DEVICE (Original)
+  // TEMPLATE 1: CLASSIC DEVICE (Professional Leica/Flagship Style)
   // ==========================================
   Widget _buildClassicLayout(
     FrameStyle style,
@@ -74,26 +76,130 @@ class WatermarkCanvas extends StatelessWidget {
     ExifData? exif,
     String imagePath,
   ) {
+    final textColor = _getTextColor(style);
+    final secondaryColor = textColor.withOpacity(0.6);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildImageWithShadow(style, imagePath),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _buildBrandLogo(brand, _getTextColor(style), style),
-            if (exif != null) _buildExifTextRight(exif, style),
-          ],
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 1. BRAND LOGO
+                _buildBrandLogo(brand, textColor, style),
+
+                // 2. VERTICAL DIVIDER
+                if (exif != null)
+                  Container(
+                    width: 1.5,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    color: textColor.withOpacity(0.3),
+                  ),
+
+                // 3. EXIF DETAILS (Shot On + Specs)
+                if (exif != null)
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Shot on ',
+                                style: GoogleFonts.inter(
+                                  color: textColor,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              TextSpan(
+                                text: exif.cameraModel.isNotEmpty
+                                    ? exif.cameraModel
+                                    : brand.displayName,
+                                style: GoogleFonts.inter(
+                                  color: textColor,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _buildExifString(exif, style),
+                          style: GoogleFonts.inter(
+                            color: secondaryColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: 0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                // 4. DATE AND TIME (Right Aligned)
+                if (exif != null &&
+                    style.showDate &&
+                    exif.dateTimeOriginal.isNotEmpty)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        exif.dateTimeOriginal.split(' ').first,
+                        style: GoogleFonts.inter(
+                          color: textColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (exif.dateTimeOriginal.split(' ').length > 1)
+                        Text(
+                          exif.dateTimeOriginal.split(' ')[1],
+                          style: GoogleFonts.inter(
+                            color: secondaryColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
         ),
       ],
     );
   }
 
+  String _buildExifString(ExifData exif, FrameStyle style) {
+    List<String> parts = [];
+    if (style.showLens && exif.focalLength.isNotEmpty) {
+      parts.add(exif.focalLength);
+    }
+    if (style.showExposure) {
+      if (exif.fNumber.isNotEmpty) parts.add('f/${exif.fNumber}');
+      if (exif.exposureTime.isNotEmpty) parts.add(exif.exposureTime);
+      if (exif.isoSpeedRatings.isNotEmpty)
+        parts.add('ISO ${exif.isoSpeedRatings}');
+    }
+    return parts.join('   ');
+  }
+
   // ==========================================
-  // TEMPLATE 2: POLAROID (Vintage, thick bottom)
+  // TEMPLATE 2: POLAROID (Vintage Paper Frame)
   // ==========================================
   Widget _buildPolaroidLayout(
     FrameStyle style,
@@ -101,30 +207,57 @@ class WatermarkCanvas extends StatelessWidget {
     ExifData? exif,
     String imagePath,
   ) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildImageWithShadow(style, imagePath),
-        const SizedBox(height: 40), // Ruang bawah yang luas khas polaroid
-        Center(
-          child: Text(
-            exif?.dateTimeOriginal.split(' ').first ?? 'MY MEMORY',
-            style: const TextStyle(
-              color: Colors.black87,
-              fontFamily: 'Caveat', // Jika menggunakan Google Fonts handwritten
-              fontSize: 22,
-              fontWeight: FontWeight.w500,
+    final bool isDark = style.backgroundColor.computeLuminance() < 0.5;
+
+    return Container(
+      // Subtle paper texture equivalent via shadow and borders
+      decoration: BoxDecoration(
+        color: style.backgroundColor,
+        border: Border.all(
+          color: isDark ? Colors.white10 : Colors.black12,
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(2, 4),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 48),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Inner frame around the image to make it look like actual printed photo
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: isDark ? Colors.black54 : Colors.black12,
+                width: 1,
+              ),
+            ),
+            child: _buildImageWithShadow(style, imagePath, applyShadow: false),
+          ),
+          const SizedBox(height: 32),
+          Center(
+            child: Text(
+              exif?.dateTimeOriginal.split(' ').first ?? 'MY MEMORY',
+              style: GoogleFonts.caveat(
+                color: isDark ? Colors.white70 : Colors.black87,
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 10),
-      ],
+        ],
+      ),
     );
   }
 
   // ==========================================
-  // TEMPLATE 3: MINIMALIST
+  // TEMPLATE 3: MINIMALIST (Clean & Centered)
   // ==========================================
   Widget _buildMinimalistLayout(
     FrameStyle style,
@@ -132,24 +265,27 @@ class WatermarkCanvas extends StatelessWidget {
     ExifData? exif,
     String imagePath,
   ) {
+    final textColor = _getTextColor(style);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildImageWithShadow(style, imagePath),
-        const SizedBox(height: 30),
+        const SizedBox(height: 24),
         Center(
           child: Column(
             children: [
-              _buildBrandLogo(brand, _getTextColor(style), style),
+              _buildBrandLogo(brand, textColor, style, isMinimalist: true),
               const SizedBox(height: 8),
-              if (exif != null && style.showExposure)
+              if (exif != null)
                 Text(
-                  '${exif.focalLength} | f/${exif.fNumber} | ISO${exif.isoSpeedRatings}',
-                  style: TextStyle(
-                    color: _getTextColor(style).withOpacity(0.6),
-                    fontSize: 10,
-                    letterSpacing: 2.0,
+                  _buildExifString(exif, style),
+                  style: GoogleFonts.spaceGrotesk(
+                    color: textColor.withOpacity(0.6),
+                    fontSize: 11,
+                    letterSpacing: 3.0,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
             ],
@@ -169,42 +305,54 @@ class WatermarkCanvas extends StatelessWidget {
         : Colors.white;
   }
 
-  Widget _buildBrandLogo(DeviceBrand brand, Color color, FrameStyle style) {
+  Widget _buildBrandLogo(
+    DeviceBrand brand,
+    Color color,
+    FrameStyle style, {
+    bool isMinimalist = false,
+  }) {
     if (style.customText != null && style.customText!.isNotEmpty) {
       return Text(
         style.customText!,
-        style: TextStyle(
+        style: GoogleFonts.montserrat(
           color: color,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w800,
           fontStyle: FontStyle.italic,
-          fontSize: 24,
-          letterSpacing: 2.0,
+          fontSize: isMinimalist ? 18 : 22,
+          letterSpacing: 1.5,
         ),
       );
     }
 
     if (brand.svgIconUrl != null) {
       return SizedBox(
-        height: 24,
+        height: isMinimalist ? 20 : 28,
+        width: 48,
         child: SvgPicture.network(
           brand.svgIconUrl!,
           colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+          fit: BoxFit.contain,
+          alignment: Alignment.centerLeft,
         ),
       );
     }
     return Text(
       brand.displayName,
-      style: TextStyle(
+      style: GoogleFonts.montserrat(
         color: color,
-        fontWeight: FontWeight.w900,
+        fontWeight: FontWeight.w800,
         fontStyle: FontStyle.italic,
-        fontSize: 24,
-        letterSpacing: 2.0,
+        fontSize: isMinimalist ? 18 : 22,
+        letterSpacing: 1.5,
       ),
     );
   }
 
-  Widget _buildImageWithShadow(FrameStyle style, String imagePath) {
+  Widget _buildImageWithShadow(
+    FrameStyle style,
+    String imagePath, {
+    bool applyShadow = true,
+  }) {
     Widget imageWidget = Image.file(File(imagePath), fit: BoxFit.contain);
 
     // Apply Photo Filters
@@ -216,13 +364,14 @@ class WatermarkCanvas extends StatelessWidget {
     }
 
     return Container(
-      decoration: style.hasShadow
+      decoration: (style.hasShadow && applyShadow)
           ? BoxDecoration(
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 25,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 15),
                 ),
               ],
             )
@@ -353,40 +502,5 @@ class WatermarkCanvas extends StatelessWidget {
     }
   }
 
-  Widget _buildExifTextRight(ExifData exif, FrameStyle style) {
-    final textColor = _getTextColor(style);
-
-    String topText = '';
-    if (style.showLens) {
-      topText += '${exif.focalLength}   ';
-    }
-    if (style.showExposure) {
-      topText +=
-          'f/${exif.fNumber}   ${exif.exposureTime}   ISO${exif.isoSpeedRatings}';
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (topText.trim().isNotEmpty)
-          Text(
-            topText.trimRight(),
-            style: TextStyle(
-              color: textColor,
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 1.2,
-            ),
-          ),
-        if (topText.trim().isNotEmpty && style.showDate)
-          const SizedBox(height: 4),
-        if (style.showDate)
-          Text(
-            exif.dateTimeOriginal,
-            style: TextStyle(color: textColor.withOpacity(0.6), fontSize: 9),
-          ),
-      ],
-    );
-  }
+  // Exif text building is now handled inside _buildClassicLayout directly
 }

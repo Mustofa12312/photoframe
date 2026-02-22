@@ -7,8 +7,10 @@ import 'package:screenshot/screenshot.dart';
 class ExportUtil {
   static Future<bool> saveToGallery(ScreenshotController controller) async {
     try {
-      // Capture the widget as Uint8List at higher resolution
-      final Uint8List? imageBytes = await controller.capture(pixelRatio: 3.0);
+      // Capture the widget as Uint8List at massive resolution
+      // A pixel ratio of 6.0 on a mobile logic size generally creates an 8MP - 12MP image
+      // maintaining the professional quality from the original photo.
+      final Uint8List? imageBytes = await controller.capture(pixelRatio: 6.0);
 
       if (imageBytes != null) {
         final fileName = "PhotoFrame_${DateTime.now().millisecondsSinceEpoch}";
